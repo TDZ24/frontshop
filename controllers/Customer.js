@@ -14,7 +14,7 @@ export default function Customer() {
     const [message, setMessage] = useState("")
     const [idSearch, setIdsearch] = useState("")
     // configuración del formulario
-    const { control, handleSubmit, formState: { errors }, reset } = useForm({
+    const { control, handleSubmit, formState: { errors }, reset, setValue } = useForm({
         defaultValues: {
             firstName: '',
             lastName: ''
@@ -37,7 +37,45 @@ export default function Customer() {
         reset();
     };
 
+    const onUpdate = async(data) => {
+
+        const response = await axios.put(`http://127.0.0.1:3000/api/clientes/${idSearch}`, {
+            nombre:data.firstName,
+            apellidos:data.lastName,
+        })
+        setIsError(false);
+        setMessage("Cliente actualizado correctamente");
+        seetTimeout(()=>{
+            setMessage("")
+        },2000)
+        reset();
+    };
+
+    const onDelete = async(data) =>{
+        if(confirm(`Esta seguro de eliminar el cliente ${data.firstName} ${data.lastName}?`)){
+            const response = await axios.delete(`http://127.0.0.1:3000/api/clientes/${idSearch}`)
+            setIsError(false)
+            setMessage("Cliente Eliminado correctamente")
+            setTimeout(()=>{
+                setMessage("")
+                reset()
+            },2000)
+        }
+    }
+
     const onSearch = async(data)=>{
+        const response = await axios.get(`http://127.0.0.1:3000/api/clientes/${idSearch}`);
+        console.log(response.data)
+        if(!response.data.error){ // encuentra el idsearch
+            setValue("firstName",response.data.nombre)
+            setValue("lastName",response.data.apellidos)
+            setMessage('')
+            setIsError(false)
+        }
+        else{
+            setIsError(true)
+            setMessage('El id no existe, intente de nuevo')
+        }
     }
     
     return (
@@ -96,21 +134,24 @@ export default function Customer() {
                 <Button
                     style={{ backgroundColor: 'orange', marginLeft: 10 }}
                     icon="card-search-outline"
-                    mode="contained" onPress={() => console.log('Pressed')}
-                    onPress={onSearch}>
+                    mode="contained"
+                    onPress={onSearch}
+                    >
                     Buscar
                 </Button>
             </View>
             <View style={{ marginTop: 20, flexDirection: 'row' }}>
                 <Button
                     icon="pencil-outline"
-                    mode="contained" onPress={() => console.log('Pressed')}>
+                    mode="contained" 
+                    onPress={handleSubmit(onUpdate)}>
                     Actualizar
                 </Button>
                 <Button
                     style={{ backgroundColor: 'red', marginLeft: 10 }}
                     icon="delete-outline"
-                    mode="contained" onPress={() => console.log('Pressed')}>
+                    mode="contained" 
+                    onPress={handleSubmit(onDelete)}>
                     Eliminar
                 </Button>
             </View>
